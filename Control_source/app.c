@@ -86,16 +86,7 @@ uint8_t setup(void)
 
 void loop(void)
 {
-//    if (read_key(0))
-//    {
-//        toggle_led(0);
-//        
-//    }
 
-//    if (read_key(1))
-//    {
-//        toggle_led(1);
-//    }
     static uint32_t cnt = 50;
           HAL_Delay(50); //延时 ms
 //      cnt++;
