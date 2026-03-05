@@ -136,11 +136,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+    /* USER CODE END WHILE */ 
 
     /* USER CODE BEGIN 3 */
 //    loop();
 //      SVPWM_OpenLoop_Example();   //是否需要放在while内
+//      timer_callback();  //led翻转
       
       motor1_pos = BISS_ReadAngleDeg(&encoder_motor1);  //M1内框
 //      motor2_pos = BISS_ReadPosition(&encoder_motor2, &motor2_crc_ok);   //M2外框

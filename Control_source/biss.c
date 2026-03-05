@@ -11,46 +11,10 @@
 #define BISS_T_US   2   // 半周期 2 µs → 250 kHz
 
 // 6. 优化版本：批量读取（减少函数调用开销）
-#define BISS_POS_BITS   24          // 编码器角度位数
+#define BISS_POS_BITS   24          // 编码器角度位数······················
 #define BISS_FULL_SCALE (1UL << BISS_POS_BITS)
 
-//float BISS_ReadAngleDeg(BISS_Encoder_t *enc)
-//{
-//    uint32_t raw = 0;
-//    uint8_t bit;
 
-//    /* 关中断，保证时序 */
-//    uint32_t primask = __get_PRIMASK();
-//    __disable_irq();
-
-//    /* CLK idle high */
-//    enc->clk_port->BSRR = enc->clk_pin;
-//    delay_us_tim7(1);
-
-//    for (uint8_t i = 0; i < BISS_POS_BITS; i++)
-//    {
-//        /* CLK ↓ */
-//        enc->clk_port->BSRR = (uint32_t)enc->clk_pin << 16;
-//        delay_us_tim7(BISS_T_US);
-
-//        /* DAT 采样 */
-//        bit = (enc->dat_port->IDR & enc->dat_pin) ? 1 : 0;
-//        raw = (raw << 1) | bit;
-
-//        /* CLK ↑ */
-//        enc->clk_port->BSRR = enc->clk_pin;
-//        delay_us_tim7(BISS_T_US);
-//    }
-
-//    /* CLK idle high */
-//    enc->clk_port->BSRR = enc->clk_pin;
-
-//    /* 恢复中断 */
-//    if (!primask) __enable_irq();
-
-//    /* 映射到 0~360° */
-//    return (float)raw * 360.0f / (float)BISS_FULL_SCALE;
-//}
 float BISS_ReadAngleDeg(BISS_Encoder_t *enc)
 {
     uint32_t raw = 0;
@@ -74,7 +38,7 @@ float BISS_ReadAngleDeg(BISS_Encoder_t *enc)
         delay_us_tim7(BISS_T_US);
     }
 
-    if (!primask) __enable_irq();
+    if (!primask) __enable_irq();                       
 
     /* 去掉符号位，仅保留角度 */
     raw &= (BISS_FULL_SCALE - 1);

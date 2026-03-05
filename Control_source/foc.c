@@ -1,20 +1,28 @@
 #include "foc.h"
 #include "svpwm.h"
 #include "stm32f4xx_hal_tim.h"  // 添加HAL库头文件
+#include "biss.h"
+#include <math.h>
+
+
 
 #define SQRT3_2 0.86602540378f
 #define SQRT2_3 0.81649658093f
 #define TWO_PI  6.28318530718f
 #define ONE_BY_SQRT3 0.57735026919f
+#define PI_VAL  3.14159265359f  // 替代 M_PI
 
 /**
   * @brief  FOC初始化
   */
-void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs) {
+void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder) {
     // 初始化电机参数
     motor->TIM_PWM = TIMx;
     motor->Vdc = Vdc;
     motor->pole_pairs = pole_pairs;
+
+    // === 新增：绑定编码器 ===
+    motor->encoder = encoder;
     
     // 默认电机参数（根据实际电机修改）
     motor->Rs = 0.1f;          // 0.1Ω
@@ -147,40 +155,87 @@ void FOC_SpeedControl(FOC_Motor *motor, float Ts) {
   * @brief  获取电角度
   */
 float FOC_GetElectricalAngle(FOC_Motor *motor) {
-    // 这里需要根据编码器或霍尔传感器获取实际角度
-    // 开环运行时可以自己生成角度
-    return motor->theta_e;
+    float mechanical_angle_deg;
+    float electrical_angle_rad;
+    
+    // === 调用 BISS 编码器读取机械角度 ===
+    if (motor->encoder != NULL) {
+        mechanical_angle_deg = BISS_ReadAngleDeg(motor->encoder);
+    } else {
+        // 无编码器时使用开环角度
+        return motor->theta_e;
+    }
+    
+    // === 机械角度 → 电角度转换 ===
+    // 1. 度转弧度：angle_rad = angle_deg × π / 180
+    // 2. 机械角度转电角度：electrical = mechanical × pole_pairs
+    electrical_angle_rad = mechanical_angle_deg * PI_VAL / 180.0f * motor->pole_pairs;
+    
+    // === 限制在 0~2π 范围内 ===
+    while (electrical_angle_rad > TWO_PI) {
+        electrical_angle_rad -= TWO_PI;
+    }
+    while (electrical_angle_rad < 0) {
+        electrical_angle_rad += TWO_PI;
+    }
+    
+    return electrical_angle_rad;
 }
 
 /**
   * @brief  FOC主更新函数
   */
 void FOC_Update(FOC_Motor *motor, float Ts) {
-    // 1. 读取电流（需要ADC采样）
+    // 1. 读取电流（需要 ADC 采样）
     // motor->Ia = ADC_GetCurrentA();
     // motor->Ib = ADC_GetCurrentB();
     
-    // 2. Clarke变换
+    // 2. === 获取电角度（调用编码器）===
+    motor->theta_e = FOC_GetElectricalAngle(motor);
+    
+    // 3. 计算电角速度
+    motor->speed_e = (motor->theta_e - motor->theta_e_prev) / Ts;
+    motor->theta_e_prev = motor->theta_e;
+    
+    // 4. 计算机械速度（用于速度环）
+    motor->speed_m = motor->speed_e / motor->pole_pairs * 60.0f / TWO_PI;
+    
+    // 5. Clarke 变换
     FOC_ClarkeTransform(motor);
     
-    // 3. Park变换
+    // 6. Park 变换
     FOC_ParkTransform(motor);
     
-    // 4. 电流环控制
+    // 7. 速度环控制
+    FOC_SpeedControl(motor, Ts);
+    
+    // 8. 电流环控制
     FOC_CurrentControl(motor, Ts);
     
-    // 5. 逆Park变换
+    // 9. 逆 Park 变换
     FOC_InverseParkTransform(motor);
     
-    // 6. SVPWM
+    // 10. SVPWM 输出
     motor->svpwm.Ualpha = motor->Valpha;
     motor->svpwm.Ubeta = motor->Vbeta;
     SVPWM_Calc(&motor->svpwm);
-    
-    // 7. 设置PWM
     SVPWM_SetDutyCycle(&motor->svpwm, motor->TIM_PWM);
-    
-    // 8. 更新角度（开环运行时）
-     motor->theta_e += motor->speed_e * Ts;
-     if (motor->theta_e > TWO_PI) motor->theta_e -= TWO_PI;
 }
+
+/**
+  * @brief  设置占空比
+  */
+void FOC_SetDutyCycle(FOC_Motor* motor, TIM_TypeDef* timer) {
+    // FOC 控制完成后，将电压矢量转换为 SVPWM 输入
+    SVPWM_TypeDef svpwm;
+    SVPWM_Init(&svpwm, motor->Vdc, 0.01);
+    svpwm.Ualpha = motor->Valpha;
+    svpwm.Ubeta = motor->Vbeta;
+    
+    
+    SVPWM_Calc(&svpwm);
+    
+    // 调用 SVPWM 模块设置 PWM
+    SVPWM_SetDutyCycle(&svpwm, timer);
+}
+

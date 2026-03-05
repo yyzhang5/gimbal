@@ -27,6 +27,16 @@
 uint16_t ADC_Buff[ADC1_CH_NUM+ADC2_CH_NUM+ADC3_CH_NUM];
 
 
+// ! 待完善功能
+// /* 定义函数 */
+// 编码器闭环
+// {
+//     SVPWM闭环
+//     电流闭环
+//     速度环闭环
+// }
+
+
 
 
 //功能函数
@@ -57,7 +67,7 @@ uint8_t setup(void)
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);  // M1 PWM CH1N
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
-//M1 PWM
+//M1 PWM 
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1); // M2 PWM CH1
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
@@ -65,11 +75,11 @@ uint8_t setup(void)
     HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_2);
     HAL_TIMEx_PWMN_Start(&htim8, TIM_CHANNEL_3);
     
-      /* 使能定时器的主输出（对于高级定时器TIM1和TIM8必须设置）*/
+    /* 使能定时器的主输出（对于高级定时器TIM1和TIM8必须设置）*/
     __HAL_TIM_MOE_ENABLE(&htim1);
     __HAL_TIM_MOE_ENABLE(&htim8);
     
-      /* 设置初始占空比为0%（安全启动）*/
+    /* 设置初始占空比为0%（安全启动）*/
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
@@ -78,8 +88,6 @@ uint8_t setup(void)
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);
     
-    
-
     
     return 0;
 }
@@ -91,14 +99,14 @@ void loop(void)
           HAL_Delay(50); //延时 ms
 //      cnt++;
       __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, cnt); // 设置占空比，占空比=cnt/ARR
-      if(cnt ==100)
-      {
+    if(cnt ==100)
+    {
         cnt = 0;
-      }
+    }
 }
     
 
-void timer_callback(void)
+void timer_callback(void)       //led灯高低电平翻转
 {
     volatile static uint32_t cnt = 0;
     cnt++;
@@ -113,13 +121,14 @@ void timer_callback(void)
     }
     if(cnt%1000 == 0)
     {
-        toggle_led(1);
-        toggle_led(0);
+       toggle_led(1);
+    //    toggle_led(0);
         // any code
     }
     if(cnt%10000 == 0)
     {
-
+        //  toggle_led(1);
+         toggle_led(0);
         // any code
     }
     if(cnt == 0xffffff)
