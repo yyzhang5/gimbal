@@ -12,38 +12,38 @@
 FOC_Motor motor1, motor2;
 
 
-void SVPWM_OpenLoop_Example(void)
+void SVPWM_OpenLoop_Example(void)  
 {
-    SVPWM_TypeDef svpwm1, svpwm2;
-
-    float pwm_freq = 168000000.0f / ((167 + 1) * (99 + 1) * 2);
-    float Ts = 1.0f / pwm_freq;
-
-    SVPWM_Init(&svpwm1, 24.0f, Ts);
-    SVPWM_Init(&svpwm2, 24.0f, Ts);
-                                                                                                                                                                                
-    float angle = 0.0f;
-    float speed = 2 * M_PI * 0.1f;   // 0.1 Hz
+    static float angle = 0.0f;
+    static SVPWM_TypeDef svpwm1, svpwm2;
+    static int initialized = 0;
+    
+    if (!initialized) {
+        float pwm_freq = 168000000.0f / ((167 + 1) * (99 + 1) * 2);
+        float Ts = 1.0f / pwm_freq;
+        SVPWM_Init(&svpwm1, 24.0f, Ts);
+        SVPWM_Init(&svpwm2, 24.0f, Ts);
+        initialized = 1;
+    }
+    
     float amplitude = 6.0f;
-
-    while (1)
-    {
-        svpwm1.Ualpha = amplitude * cosf(angle);
-        svpwm1.Ubeta  = amplitude * sinf(angle);
-
-        svpwm2.Ualpha = amplitude * cosf(angle + M_PI);
-        svpwm2.Ubeta  = amplitude * sinf(angle + M_PI);
-
-        SVPWM_Calc(&svpwm1);
-        SVPWM_Calc(&svpwm2);
-
-        SVPWM_SetDutyCycle(&svpwm1, TIM1);
-        SVPWM_SetDutyCycle(&svpwm2, TIM8);
-
-        angle += speed * Ts;
-        if (angle > TWO_PI) angle -= TWO_PI; // 优化：使用定义常量
-    }    
+    float speed = 2 * M_PI * 0.2f;
+    float Ts = 1.0f / (168000000.0f / ((167 + 1) * (99 + 1) * 2));
+    
+    svpwm1.Ualpha = amplitude * cosf(angle);
+    svpwm1.Ubeta  = amplitude * sinf(angle);
+    svpwm2.Ualpha = amplitude * cosf(angle + M_PI);
+    svpwm2.Ubeta  = amplitude * sinf(angle + M_PI);
+    
+    SVPWM_Calc(&svpwm1);
+    SVPWM_Calc(&svpwm2);
+    SVPWM_SetDutyCycle(&svpwm1, TIM1);
+    SVPWM_SetDutyCycle(&svpwm2, TIM8);
+    
+    angle += speed * Ts;
+    if (angle > 2 * M_PI) angle -= 2 * M_PI;
 }
+
 
 // FOC 闭环控制示例
 void FOC_ClosedLoop_Example(void) {
