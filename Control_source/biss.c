@@ -23,7 +23,7 @@ float BISS_ReadAngleDeg(BISS_Encoder_t *enc)
     uint32_t primask = __get_PRIMASK();
     __disable_irq();
 
-    GPIO_SET(enc->clk_port, enc->clk_pin);
+    GPIO_SET(enc->clk_port, enc->clk_pin); // 启动 将指定的时钟引                                                                                                                                                                                                                                                                                                                                        脚（enc->clk_pin）置为高电平。这使时钟线进入空闲高电平状态，准备开始通信。
     delay_us_tim7(1);
 
     for (uint8_t i = 0; i < BISS_POS_BITS; i++)
@@ -53,11 +53,8 @@ float BISS_ReadAngleDeg(BISS_Encoder_t *enc)
 }
 
 
-
-
-
 /*********************CRC 校验***************************/
-uint8_t BISS_CRC6_Calc(uint32_t data)
+uint8_t BISS_CRC6_Calc(uint32_t data)    
 {
     uint8_t crc = 0;
     uint32_t mask = 1UL << (BISS_POS_BITS - 1);

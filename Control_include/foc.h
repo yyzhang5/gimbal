@@ -21,9 +21,9 @@
     typedef struct {
         // 电机参数
         float Rs;          // 定子电阻
-        float Ld;          // d 轴电感
-        float Lq;          // q 轴电感
-        float flux_linkage; // 永磁体磁链
+        // float Ld;          // d 轴电感
+        // float Lq;          // q 轴电感
+        // float flux_linkage; // 永磁体磁链
         uint8_t pole_pairs; // 极对数
         
         // 电流反馈
@@ -67,21 +67,55 @@
     
         // === 新增编码器指针 ===
         BISS_Encoder_t *encoder;  // 指向对应的编码器实例
+
+        // === 新增ADC ===
+        uint8_t adc_idx_u;      // U 相 ADC 缓冲区索引
+        uint8_t adc_idx_v;      // V 相 ADC 缓冲区索引
+        uint8_t adc_idx_w;      // V 相 ADC 缓冲区索引
+        float* p_current_offset; // 指向对应电机的偏置值
     } FOC_Motor;
+    // 定义两个电机
+    extern FOC_Motor motor1, motor2;
     
+
+        // === 偏置值结构 ===
+    typedef struct {
+        float offset_pm1;
+        float offset_pm2;
+    } Current_Offset_t;
+
+    // === 外部变量声明（关键修复）===
+    extern Current_Offset_t g_current_offset;
+
+extern volatile uint8_t adc1_ready;
+extern volatile uint8_t adc2_ready;
+// extern volatile uint8_t adc3_ready;
+
     
     
     // 函数声明
-    void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder);
+    void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w, float* p_offset);
     void FOC_ClarkeTransform(FOC_Motor *motor);
     void FOC_ParkTransform(FOC_Motor *motor);
     void FOC_InverseParkTransform(FOC_Motor *motor);
     void FOC_PI_Update(PI_Controller *pi, float error, float Ts);
-    void FOC_CurrentControl(FOC_Motor *motor, float Ts);
-    void FOC_SpeedControl(FOC_Motor *motor, float Ts);
-    void FOC_Update(FOC_Motor *motor, float Ts);
-    float FOC_GetElectricalAngle(FOC_Motor *motor);
     void FOC_SetDutyCycle(FOC_Motor* motor, TIM_TypeDef* timer);
+    
+    void Loop_Speed(FOC_Motor *motor, float Ts);
+    void Loop_Current(FOC_Motor *motor, float Ts);
+
+    float Pos_ElecTheta(FOC_Motor *motor);
+    float M1_Speed_Get(float M1_Pos_MechTheta, float M1_Time_interval);
+    float M2_Speed_Get(float M2_Pos_MechTheta, float M2_Time_interval);
+    float M1_Speed_Filter(float M1_Temp_spd_dms);
+    float M2_Speed_Filter(float M2_Temp_spd_dms);
+
+
+    void CurrentOffsetCalibration(uint8_t motor_id, uint8_t adc_idx_u, uint8_t adc_idx_v);
+    float ADC_GetCurrentPhase(uint8_t adc_index, float current_offset);
+    float ADC_GetCurrentW(float current_u, float current_v);
+    void CurrentSensorSuite(FOC_Motor *motor, float Ts);   //ADC电流采集
+    
     
     
     

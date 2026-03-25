@@ -10,11 +10,21 @@ extern "C" {
 #include "stm32f4xx.h"
 #include <math.h>
 
+#ifndef ADC1_CH_NUM
+#define ADC1_CH_NUM 8
+#endif
+#ifndef ADC2_CH_NUM
+#define ADC2_CH_NUM 2
+#endif
+#ifndef ADC3_CH_NUM
+#define ADC3_CH_NUM 6
+#endif
+
 /* ==================== 宏定义 ==================== */
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-#define TWO_PI  6.28318530718f
+// #define TWO_PI  6.28318530718f
 
 /* ==================== 外部变量声明 ==================== */
 // 双电机控制对象
@@ -32,7 +42,10 @@ void SVPWM_OpenLoop_Example(void);
  * @brief FOC 闭环控制示例
  * @note 双电机速度闭环控制，需配合电流采样和角度反馈
  */
-void FOC_ClosedLoop_Example(void);
+// void FOC_ClosedLoop_Example(void);  放在中断中HAL_TIM_PeriodElapsedCallback()
+void Motor_Init(void);
+void M1_Control(void);
+void M2_Control(void);
 
 /* ==================== 控制参数配置 ==================== */
 // PWM 定时器配置
@@ -50,6 +63,19 @@ void FOC_ClosedLoop_Example(void);
 // 控制周期 (100us)
 #define CONTROL_PERIOD_US  100
 #define CONTROL_PERIOD_S   0.0001f
+
+/* ==================== ADC 缓冲区索引映射（app.c DMA 顺序） ==================== */
+#define ADC1_START_INDEX 0
+#define ADC2_START_INDEX (ADC1_CH_NUM)
+#define ADC3_START_INDEX (ADC1_CH_NUM + ADC2_CH_NUM)
+
+#define PM1_ADC_U_IDX (ADC1_START_INDEX + 3)  // ADC1_IN8
+#define PM1_ADC_V_IDX (ADC1_START_INDEX + 2)  // ADC1_IN6
+#define PM1_ADC_W_IDX (ADC2_START_INDEX + 0)  // ADC2_IN3
+
+#define PM2_ADC_U_IDX (ADC1_START_INDEX + 6)  // ADC1_IN12
+#define PM2_ADC_V_IDX (ADC1_START_INDEX + 7)  // ADC1_IN13
+#define PM2_ADC_W_IDX (ADC2_START_INDEX + 1)  // ADC2_IN4
 
 /* ==================== 接口函数声明 ==================== */
 /**

@@ -1,6 +1,7 @@
 #include "delay.h"
 
 extern TIM_HandleTypeDef htim7;
+// ! Tim7 基本定时器
 
 /* TIM7: PSC = 84-1 → 1 MHz → 1 µs / tick */
 void delay_us_tim7(uint16_t us)
