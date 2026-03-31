@@ -11,7 +11,7 @@ extern "C" {
 #include <math.h>
 
 #ifndef ADC1_CH_NUM
-#define ADC1_CH_NUM 8
+#define ADC1_CH_NUM 2
 #endif
 #ifndef ADC2_CH_NUM
 #define ADC2_CH_NUM 2

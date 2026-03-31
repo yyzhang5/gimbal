@@ -17,7 +17,7 @@
 
 
 
-#define ADC1_CH_NUM 8
+#define ADC1_CH_NUM 2
 #define ADC2_CH_NUM 2
 #define ADC3_CH_NUM 6
 
@@ -71,7 +71,7 @@ uint8_t setup(void)
     HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);  // PM1_CTRL_SD
 
 
-    // // 启动ADC DMA（循环模式）
+    // 启动ADC DMA（循环模式）
     HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ADC_Buff, ADC1_CH_NUM);
     HAL_ADC_Start_DMA(&hadc2, (uint32_t*)(ADC_Buff+ADC1_CH_NUM), ADC2_CH_NUM);
     HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(ADC_Buff+ADC1_CH_NUM+ADC2_CH_NUM), ADC3_CH_NUM);
@@ -105,7 +105,7 @@ uint8_t setup(void)
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);
     
-    
+    Current_Offset_Calibration();   //电流偏置校准
     return 0;
 }
 

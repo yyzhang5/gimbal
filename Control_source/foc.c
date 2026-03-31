@@ -2,7 +2,9 @@
 #include "svpwm.h"
 #include "stm32f4xx_hal_tim.h"  // 添加HAL库头文件
 #include "biss.h"
+#include "interrupts.h"  
 #include <math.h>
+
 
 
 #define SQRT3_2 0.86602540378f
@@ -13,12 +15,15 @@
 
 // 在 foc.c 文件开头，include 之后添加
 extern uint16_t ADC_Buff[];  // 引用 app.c 中定义的 ADC 缓冲区
+CurrentOffset_t M1_Offset = {0};
+CurrentOffset_t M2_Offset = {0};
+
 
 
 /**
   * @brief  FOC初始化
   */
-void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w, float* p_offset) {       
+void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w) {       
     // 初始化电机参数
     motor->TIM_PWM = TIMx;
     motor->Vdc = Vdc;
@@ -30,8 +35,7 @@ void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs
       // === 新增：ADC 通道配置 ===
     motor->adc_idx_u = adc_idx_u;
     motor->adc_idx_v = adc_idx_v;
-    motor->p_current_offset = p_offset;
-    
+
     // 默认电机参数（根据实际电机修改）
     motor->Rs = 3.0f;          // 线电阻3Ω
     // motor->Ld = 0.0005f;       // 0.5mH  相间电感 31.5mH
@@ -298,29 +302,69 @@ float M2_Speed_Filter(float M2_Temp_spd_dms)
 
 
 
-/**
-  * @brief  FOC主更新函数
-  */
-void CurrentSensorSuite(FOC_Motor *motor, float Ts) {
-    // 1. 读取电流（使用通用函数）
-    // 如果ADC没有一组完整采样就不更新，保持稳定
-    extern volatile uint8_t adc1_ready;
-    extern volatile uint8_t adc2_ready;
-    // extern volatile uint8_t adc3_ready;
+#define CALIB_SAMPLES 1000
 
-    if (!adc1_ready || !adc2_ready) {
-        // 必要时可返回未更新，但最好可以继续用上一次值保证软控制继续运行
-        return;
+void Current_Offset_Calibration(void)
+{
+    uint32_t sum_a1 = 0, sum_b1 = 0, sum_c1 = 0;
+    uint32_t sum_a2 = 0, sum_b2 = 0, sum_c2 = 0;
+
+    for (int i = 0; i < CALIB_SAMPLES; i++)
+    {
+        // 等待ADC更新（简单延时 or 标志位）
+        HAL_Delay(1);
+
+        sum_a1 += M1_ADC.amp_u;
+        sum_b1 += M1_ADC.amp_v;
+        sum_c1 += M1_ADC.amp_w;
+
+        sum_a2 += M2_ADC.amp_u;
+        sum_b2 += M2_ADC.amp_v;
+        sum_c2 += M2_ADC.amp_w;
     }
 
-    adc1_ready = 0;
-    adc2_ready = 0;
+    // 转换成电压偏置
+    float scale = 3.3f / 4095.0f;
 
-    motor->Ia = ADC_GetCurrentPhase(motor->adc_idx_u, *(motor->p_current_offset));
-    motor->Ib = ADC_GetCurrentPhase(motor->adc_idx_v, *(motor->p_current_offset));
-    motor->Ic = ADC_GetCurrentPhase(motor->adc_idx_w, *(motor->p_current_offset));
-    // motor->Ic = ADC_GetCurrentW(motor->Ia, motor->Ib);
+    M1_Offset.offset_a = (sum_a1 / (float)CALIB_SAMPLES) * scale;
+    M1_Offset.offset_b = (sum_b1 / (float)CALIB_SAMPLES) * scale;
+    M1_Offset.offset_c = (sum_c1 / (float)CALIB_SAMPLES) * scale;
 
+    M2_Offset.offset_a = (sum_a2 / (float)CALIB_SAMPLES) * scale;
+    M2_Offset.offset_b = (sum_b2 / (float)CALIB_SAMPLES) * scale;
+    M2_Offset.offset_c = (sum_c2 / (float)CALIB_SAMPLES) * scale;
+}
+
+/**
+  * @brief  ADC 值转电流值（使用结构体参数）
+  */
+float ADC_To_Current(uint16_t adc, float offset) {
+    float dc_full_scale = 4095.0f;
+    float vref = 3.3f;
+    // float current_offset = 1.25f;
+    float current_gain = 0.12f;
+
+    float voltage = (adc / dc_full_scale) * vref;
+    return (voltage - offset) / current_gain;
+}
+ 
+/**
+  * @brief  三相电流采集
+  */
+void CurrentSensorSuite(FOC_Motor *motor)
+{
+    if (motor == &motor1)
+    {
+        motor->Ia = ADC_To_Current(M1_ADC.amp_u, M1_Offset.offset_a);
+        motor->Ib = ADC_To_Current(M1_ADC.amp_v, M1_Offset.offset_b);
+        motor->Ic = ADC_To_Current(M1_ADC.amp_w, M1_Offset.offset_c);
+    }
+    else if (motor == &motor2)
+    {
+        motor->Ia = ADC_To_Current(M2_ADC.amp_u, M2_Offset.offset_a);
+        motor->Ib = ADC_To_Current(M2_ADC.amp_v, M2_Offset.offset_b);
+        motor->Ic = ADC_To_Current(M2_ADC.amp_w, M2_Offset.offset_c);
+    }
 }
 
 
@@ -350,64 +394,5 @@ void FOC_SetDutyCycle(FOC_Motor* motor, TIM_TypeDef* timer) {
 //  AMP_GAIN       33.0f      // 运放增益
 
 
-Current_Offset_t g_current_offset;
-/**
- * @brief  电机电流零点偏置校准（支持 PM1 和 PM2）
- * @param  motor_id: 电机标识 (1=PM1, 2=PM2)
- * @param  adc_idx_u: U 相 ADC 缓冲区索引
- * @param  adc_idx_v: V 相 ADC 缓冲区索引
- * @retval None
- */
-void CurrentOffsetCalibration(uint8_t motor_id, uint8_t adc_u_idx, uint8_t adc_v_idx)
-{
-    uint32_t sum_u = 0;
-    uint32_t sum_v = 0;
-
-    for(int i = 0; i < 1000; i++)
-    {
-        sum_u += ADC_Buff[adc_u_idx];
-        sum_v += ADC_Buff[adc_v_idx];
-        HAL_Delay(1);       // 每次采样间隔1ms，避免连续读取同一DMA数据
-    }
-
-    float offset_u = sum_u / 1000.0f;
-    float offset_v = sum_v / 1000.0f;
-
-    if (motor_id == 1) {
-        g_current_offset.offset_pm1 = (offset_u + offset_v) / 2.0f;
-        // ! 偏置值存入全局变量 因此此处无需返回值！
-    } else {
-        g_current_offset.offset_pm2 = (offset_u + offset_v) / 2.0f;
-        }   
-}
-
-/**
- * @brief  获取任意相电流（通用函数）
- * @param  adc_index: ADC_Buff 数组索引
- * @param  current_offset: 该电机对应的偏置值
- * @retval 电流值（单位：A）
- */
-float ADC_GetCurrentPhase(uint8_t adc_index, float current_offset) 
-{
-    int16_t adc_diff = (int16_t)ADC_Buff[adc_index] - (int16_t)current_offset;
-    float voltage = (float)adc_diff * 3.3f / 4095.0f;
-    float current = voltage / (0.01f * 33.0f);
-    return current;
-}
 
 
-// /**
-//  * @brief  计算 W 相电流（通过 Iu + Iv + Iw = 0）
-//  * @param  current_u: U 相电流
-//  * @param  current_v: V 相电流
-//  * @retval W 相电流（单位：A）
-//  */
-// float ADC_GetCurrentW(float current_u, float current_v) 
-// {
-//     return -(current_u + current_v);
-// }
-
-
-
-//! 上述分开采集定义过于冗余麻烦
-// 修改为ADC_Buff[6]值传入函数

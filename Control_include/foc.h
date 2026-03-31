@@ -77,24 +77,23 @@
     // 定义两个电机
     extern FOC_Motor motor1, motor2;
     
+        typedef struct
+    {
+        float offset_a;
+        float offset_b;
+        float offset_c;
+    } CurrentOffset_t;
+    extern CurrentOffset_t M1_Offset;
+    extern CurrentOffset_t M2_Offset;       
 
-        // === 偏置值结构 ===
-    typedef struct {
-        float offset_pm1;
-        float offset_pm2;
-    } Current_Offset_t;
-
-    // === 外部变量声明（关键修复）===
-    extern Current_Offset_t g_current_offset;
-
-extern volatile uint8_t adc1_ready;
-extern volatile uint8_t adc2_ready;
-// extern volatile uint8_t adc3_ready;
+    extern volatile uint8_t adc1_ready;
+    extern volatile uint8_t adc2_ready;
+    // extern volatile uint8_t adc3_ready;
 
     
     
     // 函数声明
-    void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w, float* p_offset);
+    void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w);
     void FOC_ClarkeTransform(FOC_Motor *motor);
     void FOC_ParkTransform(FOC_Motor *motor);
     void FOC_InverseParkTransform(FOC_Motor *motor);
@@ -111,12 +110,11 @@ extern volatile uint8_t adc2_ready;
     float M2_Speed_Filter(float M2_Temp_spd_dms);
 
 
-    void CurrentOffsetCalibration(uint8_t motor_id, uint8_t adc_idx_u, uint8_t adc_idx_v);
-    float ADC_GetCurrentPhase(uint8_t adc_index, float current_offset);
-    float ADC_GetCurrentW(float current_u, float current_v);
-    void CurrentSensorSuite(FOC_Motor *motor, float Ts);   //ADC电流采集
+    void CurrentSensorSuite(FOC_Motor *motor);  
+    // extern float ADC_To_Current(uint16_t adc);//ADC电流采集
+    float ADC_To_Current_Offset(uint16_t adc, float offset);
     
-    
+    extern void Current_Offset_Calibration();   //电流偏置校准
     
     
     extern TIM_HandleTypeDef htim1;  // 添加外部声明

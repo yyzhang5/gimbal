@@ -101,25 +101,16 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     /* Peripheral clock enable */
     __HAL_RCC_ADC1_CLK_ENABLE();
 
-    __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**ADC1 GPIO Configuration
-    PC0     ------> ADC1_IN10
-    PC2     ------> ADC1_IN12
-    PC3     ------> ADC1_IN13
     PA0-WKUP     ------> ADC1_IN0
-    PA5     ------> ADC1_IN5
+    PA3     ------> ADC1_IN3
     PA6     ------> ADC1_IN6
     PB0     ------> ADC1_IN8
     PB1     ------> ADC1_IN9
     */
-    GPIO_InitStruct.Pin = PM2_VTEMP_Pin|PM2_AMPU_Pin|PM2_AMPV_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = PM1_VTEMP_Pin|PM2_VBUS_Pin|PM1_AMPV_Pin;
+    GPIO_InitStruct.Pin = PM1_VTEMP_Pin|PM1_AMPW_Pin|PM1_AMPV_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -148,6 +139,9 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 
     __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc1);
 
+    /* ADC1 interrupt Init */
+    HAL_NVIC_SetPriority(ADC_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(ADC_IRQn);
     /* USER CODE BEGIN ADC1_MspInit 1 */
 
     /* USER CODE END ADC1_MspInit 1 */
@@ -160,12 +154,21 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     /* Peripheral clock enable */
     __HAL_RCC_ADC2_CLK_ENABLE();
 
+    __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC2 GPIO Configuration
-    PA3     ------> ADC2_IN3
+    PC0     ------> ADC2_IN10
+    PC2     ------> ADC2_IN12
+    PC3     ------> ADC2_IN13
     PA4     ------> ADC2_IN4
+    PA5     ------> ADC2_IN5
     */
-    GPIO_InitStruct.Pin = PM1_AMPW_Pin|PM2_AMPW_Pin;
+    GPIO_InitStruct.Pin = PM2_VTEMP_Pin|PM2_AMPU_Pin|PM2_AMPV_Pin;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+    GPIO_InitStruct.Pin = PM2_AMPW_Pin|PM2_VBUS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -189,6 +192,9 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 
     __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc2);
 
+    /* ADC2 interrupt Init */
+    HAL_NVIC_SetPriority(ADC_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(ADC_IRQn);
     /* USER CODE BEGIN ADC2_MspInit 1 */
 
     /* USER CODE END ADC2_MspInit 1 */
@@ -235,6 +241,9 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 
     __HAL_LINKDMA(hadc,DMA_Handle,hdma_adc3);
 
+    /* ADC3 interrupt Init */
+    HAL_NVIC_SetPriority(ADC_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(ADC_IRQn);
     /* USER CODE BEGIN ADC3_MspInit 1 */
 
     /* USER CODE END ADC3_MspInit 1 */
@@ -259,23 +268,28 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_ADC1_CLK_DISABLE();
 
     /**ADC1 GPIO Configuration
-    PC0     ------> ADC1_IN10
-    PC2     ------> ADC1_IN12
-    PC3     ------> ADC1_IN13
     PA0-WKUP     ------> ADC1_IN0
-    PA5     ------> ADC1_IN5
+    PA3     ------> ADC1_IN3
     PA6     ------> ADC1_IN6
     PB0     ------> ADC1_IN8
     PB1     ------> ADC1_IN9
     */
-    HAL_GPIO_DeInit(GPIOC, PM2_VTEMP_Pin|PM2_AMPU_Pin|PM2_AMPV_Pin);
-
-    HAL_GPIO_DeInit(GPIOA, PM1_VTEMP_Pin|PM2_VBUS_Pin|PM1_AMPV_Pin);
+    HAL_GPIO_DeInit(GPIOA, PM1_VTEMP_Pin|PM1_AMPW_Pin|PM1_AMPV_Pin);
 
     HAL_GPIO_DeInit(GPIOB, PM1_AMPU_Pin|PM1_VBUS_Pin);
 
     /* ADC1 DMA DeInit */
     HAL_DMA_DeInit(hadc->DMA_Handle);
+
+    /* ADC1 interrupt DeInit */
+    /* USER CODE BEGIN ADC1:ADC_IRQn disable */
+    /**
+    * Uncomment the line below to disable the "ADC_IRQn" interrupt
+    * Be aware, disabling shared interrupt may affect other IPs
+    */
+    /* HAL_NVIC_DisableIRQ(ADC_IRQn); */
+    /* USER CODE END ADC1:ADC_IRQn disable */
+
     /* USER CODE BEGIN ADC1_MspDeInit 1 */
 
     /* USER CODE END ADC1_MspDeInit 1 */
@@ -289,13 +303,28 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_ADC2_CLK_DISABLE();
 
     /**ADC2 GPIO Configuration
-    PA3     ------> ADC2_IN3
+    PC0     ------> ADC2_IN10
+    PC2     ------> ADC2_IN12
+    PC3     ------> ADC2_IN13
     PA4     ------> ADC2_IN4
+    PA5     ------> ADC2_IN5
     */
-    HAL_GPIO_DeInit(GPIOA, PM1_AMPW_Pin|PM2_AMPW_Pin);
+    HAL_GPIO_DeInit(GPIOC, PM2_VTEMP_Pin|PM2_AMPU_Pin|PM2_AMPV_Pin);
+
+    HAL_GPIO_DeInit(GPIOA, PM2_AMPW_Pin|PM2_VBUS_Pin);
 
     /* ADC2 DMA DeInit */
     HAL_DMA_DeInit(hadc->DMA_Handle);
+
+    /* ADC2 interrupt DeInit */
+    /* USER CODE BEGIN ADC2:ADC_IRQn disable */
+    /**
+    * Uncomment the line below to disable the "ADC_IRQn" interrupt
+    * Be aware, disabling shared interrupt may affect other IPs
+    */
+    /* HAL_NVIC_DisableIRQ(ADC_IRQn); */
+    /* USER CODE END ADC2:ADC_IRQn disable */
+
     /* USER CODE BEGIN ADC2_MspDeInit 1 */
 
     /* USER CODE END ADC2_MspDeInit 1 */
@@ -321,6 +350,16 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 
     /* ADC3 DMA DeInit */
     HAL_DMA_DeInit(hadc->DMA_Handle);
+
+    /* ADC3 interrupt DeInit */
+    /* USER CODE BEGIN ADC3:ADC_IRQn disable */
+    /**
+    * Uncomment the line below to disable the "ADC_IRQn" interrupt
+    * Be aware, disabling shared interrupt may affect other IPs
+    */
+    /* HAL_NVIC_DisableIRQ(ADC_IRQn); */
+    /* USER CODE END ADC3:ADC_IRQn disable */
+
     /* USER CODE BEGIN ADC3_MspDeInit 1 */
 
     /* USER CODE END ADC3_MspDeInit 1 */

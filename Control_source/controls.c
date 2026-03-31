@@ -58,9 +58,9 @@ void SVPWM_OpenLoop_Example(void)
 
 // 在中断外初始化电机（只调用一次）
 void Motor_Init(void) {
-    FOC_Init(&motor1, TIM1, 24.0f, 21, &encoder_motor1, PM1_ADC_U_IDX, PM1_ADC_V_IDX, PM1_ADC_W_IDX, &g_current_offset.offset_pm1);
+    FOC_Init(&motor1, TIM1, 24.0f, 21, &encoder_motor1, PM1_ADC_U_IDX, PM1_ADC_V_IDX, PM1_ADC_W_IDX);
 
-    FOC_Init(&motor2, TIM8, 24.0f, 21, &encoder_motor2, PM2_ADC_U_IDX, PM2_ADC_V_IDX, PM2_ADC_W_IDX, &g_current_offset.offset_pm2);
+    FOC_Init(&motor2, TIM8, 24.0f, 21, &encoder_motor2, PM2_ADC_U_IDX, PM2_ADC_V_IDX, PM2_ADC_W_IDX);
 
     // 初始速度参考值由外部命令、按键或串口调整；避免默认0导致不动
     motor1.speed_ref = 5.0f;  // 应该是°？
@@ -70,7 +70,7 @@ void Motor_Init(void) {
 
 void M1_Control(void) {
         motor1.theta_m = BISS_ReadAngleDeg(&encoder_motor1);           // 编码器数据（机械角度）
-        CurrentSensorSuite(&motor1, CONTROL_PERIOD_S);             // ADC 电流采集
+        CurrentSensorSuite(&motor1);             // ADC 电流采集
         motor1.theta_e = Pos_ElecTheta(&motor1);          // 电角度获取(弧度)
         // Clarke 变换
         FOC_ClarkeTransform(&motor1);
@@ -96,7 +96,7 @@ void M1_Control(void) {
 
     void M2_Control(void) {
         motor2.theta_m = BISS_ReadAngleDeg(&encoder_motor2);           // 编码器数据（机械角度）
-        CurrentSensorSuite(&motor2, CONTROL_PERIOD_S);             // ADC 电流采集
+        CurrentSensorSuite(&motor2);             // ADC 电流采集
         motor2.theta_e = Pos_ElecTheta(&motor2);          // 电角度获取
         
         // Clarke 变换
