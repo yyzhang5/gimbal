@@ -101,11 +101,15 @@ uint8_t setup(void)
 
     HAL_ADCEx_InjectedStart_IT(&hadc1);
     HAL_ADCEx_InjectedStart_IT(&hadc2);
+
+    HAL_NVIC_DisableIRQ(DMA2_Stream0_IRQn);
+    HAL_NVIC_DisableIRQ(DMA2_Stream1_IRQn);
+    HAL_NVIC_DisableIRQ(DMA2_Stream2_IRQn);
     
-    // 启动ADC DMA（循环模式）
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ADC_Buff, ADC1_CH_NUM);
-    HAL_ADC_Start_DMA(&hadc2, (uint32_t*)(ADC_Buff+ADC1_CH_NUM), ADC2_CH_NUM);
-    HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(ADC_Buff+ADC1_CH_NUM+ADC2_CH_NUM), ADC3_CH_NUM);  //!这句话报错,debug时卡在这不运行
+    // // 启动ADC DMA（循环模式）
+    // HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ADC_Buff, ADC1_CH_NUM);
+    // HAL_ADC_Start_DMA(&hadc2, (uint32_t*)(ADC_Buff+ADC1_CH_NUM), ADC2_CH_NUM);
+    // HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(ADC_Buff+ADC1_CH_NUM+ADC2_CH_NUM), ADC3_CH_NUM);  //!这句话报错,debug时卡在这不运行
     // 明确指定每个 ADC 的通道顺序
     // ADC1: IN0, IN5, IN6, IN8, IN9, IN10, IN12, IN13
     // ADC2: IN3, IN4

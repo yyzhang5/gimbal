@@ -50,15 +50,15 @@ void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs
     motor->pi_id.output_max = Vdc * 0.6f;  // 限幅降低，避免饱和
     motor->pi_id.output_min = -Vdc * 0.6f;
 
-    motor->pi_iq.Kp = 0.1f;      // 与 id 保持一致
-    motor->pi_iq.Ki = 0.01f;
+    motor->pi_iq.Kp = 0.8f;      // 与 id 保持一致
+    motor->pi_iq.Ki = 0.0001f;
     motor->pi_iq.integral = 0;
-    motor->pi_iq.output_max = Vdc * 0.6f;
-    motor->pi_iq.output_min = -Vdc * 0.6f;
+    motor->pi_iq.output_max = Vdc * 0.1f;
+    motor->pi_iq.output_min = -Vdc * 0.1f;
     
     // 速度环PI参数
-    motor->pi_speed.Kp = 0.05f;   // 降低比例增益
-    motor->pi_speed.Ki = 0.001f;    // 提高积分增益
+    motor->pi_speed.Kp = 0.6f;   // 降低比例增益
+    motor->pi_speed.Ki = 0.00001f;    // 提高积分增益
     motor->pi_speed.integral = 0;
     motor->pi_speed.output_max = 2.0f;   // 最大电流参考值 (A)
     motor->pi_speed.output_min = -2.0f;
@@ -338,14 +338,14 @@ void Current_Offset_Calibration(void)
 /**
   * @brief  ADC 值转电流值（使用结构体参数）
   */
-float ADC_To_Current(uint16_t adc, float offset) {
+float ADC_To_Current(uint16_t adc) {
     float dc_full_scale = 4095.0f;
     float vref = 3.3f;
-    // float current_offset = 1.25f;
+    float current_offset = 1.25f;
     float current_gain = 0.12f;
 
     float voltage = (adc / dc_full_scale) * vref;
-    return (voltage - offset) / current_gain;
+    return (voltage - current_offset) / current_gain;
 }
  
 /**
@@ -355,34 +355,16 @@ void CurrentSensorSuite(FOC_Motor *motor)
 {
     if (motor == &motor1)
     {
-        motor->Ia = ADC_To_Current(M1_ADC.amp_u, M1_Offset.offset_a);
-        motor->Ib = ADC_To_Current(M1_ADC.amp_v, M1_Offset.offset_b);
-        motor->Ic = ADC_To_Current(M1_ADC.amp_w, M1_Offset.offset_c);
+        motor->Ia = ADC_To_Current(M1_ADC.amp_u);
+        motor->Ib = ADC_To_Current(M1_ADC.amp_v);
+        motor->Ic = ADC_To_Current(M1_ADC.amp_w);
     }
     else if (motor == &motor2)
     {
-        motor->Ia = ADC_To_Current(M2_ADC.amp_u, M2_Offset.offset_a);
-        motor->Ib = ADC_To_Current(M2_ADC.amp_v, M2_Offset.offset_b);
-        motor->Ic = ADC_To_Current(M2_ADC.amp_w, M2_Offset.offset_c);
+        motor->Ia = ADC_To_Current(M2_ADC.amp_u);
+        motor->Ib = ADC_To_Current(M2_ADC.amp_v);
+        motor->Ic = ADC_To_Current(M2_ADC.amp_w);
     }
-}
-
-
-/**
-  * @brief  设置占空比
-  */
-void FOC_SetDutyCycle(FOC_Motor* motor, TIM_TypeDef* timer) {
-    // FOC 控制完成后，将电压矢量转换为 SVPWM 输入
-    SVPWM_TypeDef svpwm;
-    SVPWM_Init(&svpwm, motor->Vdc, 0.01);
-    svpwm.Ualpha = motor->Valpha;
-    svpwm.Ubeta = motor->Vbeta;
-    
-    
-    SVPWM_Calc(&svpwm);
-    
-    // 调用 SVPWM 模块设置 PWM
-    SVPWM_SetDutyCycle(&svpwm, timer);
 }
 
 
