@@ -125,11 +125,11 @@ int main(void)
   MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
 
-  
-  setup();
   Motor_Init();
+  setup();
   
-
+//  SVPWM_OpenLoop_Example();
+  
   
   /* USER CODE END 2 */
 
@@ -143,7 +143,7 @@ int main(void)
 
     // loop();  
     // timer_callback();  //! TIM7中断函数 在it.c中TIM7_IRQHandler（）调用
-     SVPWM_OpenLoop_Example();   //是否需要放在while内
+    //  SVPWM_OpenLoop_Example();   //是否需要放在while内
     
     // motor1_pos = BISS_ReadAngleDeg(&encoder_motor1);  //M1内框  //! 单独使用此函数读取角度正确
     // motor2_pos = BISS_ReadAngleDeg(&encoder_motor2);   //M2外框
@@ -415,8 +415,8 @@ static void MX_ADC3_Init(void)
   hadc3.Init.ScanConvMode = ENABLE;
   hadc3.Init.ContinuousConvMode = DISABLE;
   hadc3.Init.DiscontinuousConvMode = DISABLE;
-  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc3.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T8_TRGO;
+  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc3.Init.NbrOfConversion = 6;
   hadc3.Init.DMAContinuousRequests = ENABLE;
@@ -547,12 +547,10 @@ static void MX_TIM1_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.Pulse = 4200;
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
-  sConfigOC.Pulse = 0;
   if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
   {
     Error_Handler();

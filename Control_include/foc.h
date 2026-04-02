@@ -112,7 +112,7 @@
 
     void CurrentSensorSuite(FOC_Motor *motor);  
     // extern float ADC_To_Current(uint16_t adc);//ADC电流采集
-    float ADC_To_Current_Offset(uint16_t adc, float offset);
+    float ADC_To_Current_Offset(uint16_t adc);
     
     extern void Current_Offset_Calibration();   //电流偏置校准
     

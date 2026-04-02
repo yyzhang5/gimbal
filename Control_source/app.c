@@ -71,23 +71,17 @@ uint8_t setup(void)
     HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);  // PM1_CTRL_SD
 
 
-    // 启动ADC DMA（循环模式）
-    HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ADC_Buff, ADC1_CH_NUM);
-    HAL_ADC_Start_DMA(&hadc2, (uint32_t*)(ADC_Buff+ADC1_CH_NUM), ADC2_CH_NUM);
-    HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(ADC_Buff+ADC1_CH_NUM+ADC2_CH_NUM), ADC3_CH_NUM);
-    // 明确指定每个 ADC 的通道顺序
-    // ADC1: IN0, IN5, IN6, IN8, IN9, IN10, IN12, IN13
-    // ADC2: IN3, IN4
-    // ADC3: IN14, IN15, IN4, IN5, IN6, IN7
-
 
 //M1 PWM
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1); // M1 PWM CH1
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
     HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+    HAL_TIM_OC_Start(&htim1, TIM_CHANNEL_4);
+    
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);  // M1 PWM CH1N
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
     HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
+    HAL_TIM_OC_Start(&htim8, TIM_CHANNEL_4);
 //M1 PWM 
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1); // M2 PWM CH1
     HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
@@ -104,8 +98,21 @@ uint8_t setup(void)
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_1, 0);
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_2, 0);
     __HAL_TIM_SET_COMPARE(&htim8, TIM_CHANNEL_3, 0);
+
+    HAL_ADCEx_InjectedStart_IT(&hadc1);
+    HAL_ADCEx_InjectedStart_IT(&hadc2);
     
-    Current_Offset_Calibration();   //电流偏置校准
+    // 启动ADC DMA（循环模式）
+    HAL_ADC_Start_DMA(&hadc1, (uint32_t*)ADC_Buff, ADC1_CH_NUM);
+    HAL_ADC_Start_DMA(&hadc2, (uint32_t*)(ADC_Buff+ADC1_CH_NUM), ADC2_CH_NUM);
+    HAL_ADC_Start_DMA(&hadc3, (uint32_t*)(ADC_Buff+ADC1_CH_NUM+ADC2_CH_NUM), ADC3_CH_NUM);  //!这句话报错,debug时卡在这不运行
+    // 明确指定每个 ADC 的通道顺序
+    // ADC1: IN0, IN5, IN6, IN8, IN9, IN10, IN12, IN13
+    // ADC2: IN3, IN4
+    // ADC3: IN14, IN15, IN4, IN5, IN6, IN7
+
+    
+    // Current_Offset_Calibration();   //电流偏置校准
     return 0;
 }
 
@@ -148,8 +155,8 @@ void timer_callback(void)       //led灯高低电平翻转
     }
     if(cnt%1000 == 0)
     {
-        // toggle_led(1);
-        toggle_led(0);
+    // toggle_led(1);
+    // toggle_led(0);
         // any code
     }      
     // if(cnt%10000 == 0)
@@ -164,7 +171,7 @@ void timer_callback(void)       //led灯高低电平翻转
     }
 
     M1_Control();
-    M2_Control();
+    // M2_Control();
 }
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
@@ -174,4 +181,4 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
     } else if (hadc == &hadc2) {
         adc2_ready = 1;
     }
-}
+}                                  

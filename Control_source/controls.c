@@ -13,36 +13,37 @@
 // 定义两个电机
 FOC_Motor motor1, motor2;
 
-void SVPWM_OpenLoop_Example(void)  
+void SVPWM_OpenLoop_Example(void)
 {
-    static float angle = 0.0f;
-    static SVPWM_TypeDef svpwm1, svpwm2;
-    static int initialized = 0;
-    
-    if (!initialized) {
-        float pwm_freq = 168000000.0f / ((167 + 1) * (99 + 1) * 2);
-        float Ts = 1.0f / pwm_freq;
-        SVPWM_Init(&svpwm1, 24.0f, Ts);
-        SVPWM_Init(&svpwm2, 24.0f, Ts);
-        initialized = 1;
-    }
-    
+    SVPWM_TypeDef svpwm1, svpwm2;
+
+    float pwm_freq = 168000000.0f / ((167 + 1) * (99 + 1) * 2);
+    float Ts = 1.0f / pwm_freq;
+
+    SVPWM_Init(&svpwm1, 24.0f, Ts);
+    SVPWM_Init(&svpwm2, 24.0f, Ts);
+
+    float angle = 0.0f;
+    float speed = 2 * M_PI * 0.1f;   // 0.1 Hz
     float amplitude = 6.0f;
-    float speed = 2 * M_PI * 0.2f;
-    float Ts = 1.0f / (168000000.0f / ((167 + 1) * (99 + 1) * 2));
-    
-    svpwm1.Ualpha = amplitude * cosf(angle);
-    svpwm1.Ubeta  = amplitude * sinf(angle);
-    svpwm2.Ualpha = amplitude * cosf(angle + M_PI);
-    svpwm2.Ubeta  = amplitude * sinf(angle + M_PI);
-    
-    SVPWM_Calc(&svpwm1);
-    SVPWM_Calc(&svpwm2);
-    SVPWM_SetDutyCycle(&svpwm1, TIM1);
-    SVPWM_SetDutyCycle(&svpwm2, TIM8);
-    
-    angle += speed * Ts;
-    if (angle > 2 * M_PI) angle -= 2 * M_PI;
+
+    while (1)
+    {
+        svpwm1.Ualpha = amplitude * cosf(angle);
+        svpwm1.Ubeta  = amplitude * sinf(angle);
+
+        svpwm2.Ualpha = amplitude * cosf(angle + M_PI);
+        svpwm2.Ubeta  = amplitude * sinf(angle + M_PI);
+
+        SVPWM_Calc(&svpwm1);
+        SVPWM_Calc(&svpwm2);
+
+        SVPWM_SetDutyCycle(&svpwm1, TIM1);
+        SVPWM_SetDutyCycle(&svpwm2, TIM8);
+
+        angle += speed * Ts;
+        if (angle > 2 * M_PI) angle -= 2 * M_PI;
+    }    
 }
 
  // ! FOC闭环控制
@@ -63,7 +64,7 @@ void Motor_Init(void) {
     FOC_Init(&motor2, TIM8, 24.0f, 21, &encoder_motor2, PM2_ADC_U_IDX, PM2_ADC_V_IDX, PM2_ADC_W_IDX);
 
     // 初始速度参考值由外部命令、按键或串口调整；避免默认0导致不动
-    motor1.speed_ref = 5.0f;  // 应该是°？
+    motor1.speed_ref = 50.0f;  // 应该是°？
     motor2.speed_ref = 0.0f;
 }
 
