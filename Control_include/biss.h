@@ -32,6 +32,7 @@ float BISS_ReadAngleDeg(BISS_Encoder_t *enc);
 
 /* ===== CRC ===== */
 uint8_t BISS_CRC6_Calc(uint32_t data);
+uint8_t BISS_CRC6_Calc_Generic(uint32_t data_high, uint32_t data_low, uint8_t total_bits);
 
 
 

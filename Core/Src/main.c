@@ -51,6 +51,7 @@ DMA_HandleTypeDef hdma_adc2;
 DMA_HandleTypeDef hdma_adc3;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
 TIM_HandleTypeDef htim8;
 
@@ -73,6 +74,7 @@ static void MX_TIM1_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_TIM7_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 uint8_t KEY_Scan(uint16_t GPIO_Pin);  /************************** LED***********************/     
 
@@ -123,6 +125,7 @@ int main(void)
   MX_TIM8_Init();
   MX_USART3_UART_Init();
   MX_TIM7_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
 
   Motor_Init();
@@ -141,12 +144,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    // loop();  
-    // timer_callback();  //! TIM7中断函数 在it.c中TIM7_IRQHandler（）调用
-    //  SVPWM_OpenLoop_Example();   //是否需要放在while内
-    
-    // motor1_pos = BISS_ReadAngleDeg(&encoder_motor1);  //M1内框  //! 单独使用此函数读取角度正确
-    // motor2_pos = BISS_ReadAngleDeg(&encoder_motor2);   //M2外框
+    motor1.theta_m = BISS_ReadAngleDeg(&encoder_motor1);           // 编码器数据（机械角度）
 		
   }
   /* USER CODE END 3 */
@@ -576,6 +574,44 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 84-1;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 100-1;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
 
 }
 

@@ -70,7 +70,7 @@ void Motor_Init(void) {
 
 
 void M1_Control(void) {
-        motor1.theta_m = BISS_ReadAngleDeg(&encoder_motor1);           // 编码器数据（机械角度）
+        // motor1.theta_m = BISS_ReadAngleDeg(&encoder_motor1);           // 编码器数据（机械角度）
         CurrentSensorSuite(&motor1);             // ADC 电流采集
         motor1.theta_e = Pos_ElecTheta(&motor1);          // 电角度获取(弧度)
         // Clarke 变换

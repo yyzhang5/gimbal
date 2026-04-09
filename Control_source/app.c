@@ -66,10 +66,12 @@ uint8_t setup(void)
     HAL_TIM_Base_Start_IT(&htim1);
     HAL_TIM_Base_Start_IT(&htim7);
 
+    HAL_TIM_Base_Start(&htim6);
+
+
     /* 使能电机驱动（解除 Shutdown） */
     HAL_GPIO_WritePin(GPIOF, GPIO_PIN_2, GPIO_PIN_RESET);   // PM2_CTRL_SD
     HAL_GPIO_WritePin(GPIOF, GPIO_PIN_10, GPIO_PIN_SET);  // PM1_CTRL_SD
-
 
 
 //M1 PWM
@@ -163,7 +165,7 @@ void timer_callback(void)       //led灯高低电平翻转
     // toggle_led(0);
         // any code
     }      
-    // if(cnt%10000 == 0)
+    if(cnt%10000 == 0)
     {
         // toggle_led(1);
         // toggle_led(0);
