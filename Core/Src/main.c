@@ -50,6 +50,8 @@ DMA_HandleTypeDef hdma_adc1;
 DMA_HandleTypeDef hdma_adc2;
 DMA_HandleTypeDef hdma_adc3;
 
+CRC_HandleTypeDef hcrc;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim6;
 TIM_HandleTypeDef htim7;
@@ -75,6 +77,7 @@ static void MX_TIM8_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_TIM7_Init(void);
 static void MX_TIM6_Init(void);
+static void MX_CRC_Init(void);
 /* USER CODE BEGIN PFP */
 uint8_t KEY_Scan(uint16_t GPIO_Pin);  /************************** LED***********************/     
 
@@ -126,6 +129,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_TIM7_Init();
   MX_TIM6_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
 
   Motor_Init();
@@ -144,7 +148,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-    motor1.theta_m = BISS_ReadAngleDeg(&encoder_motor1);           // 编码器数据（机械角度）
+    motor1.theta_m =MP55_ReadFrame(&encoder_motor1);        // 编码器数据（机械角度）
 		
   }
   /* USER CODE END 3 */
@@ -481,6 +485,32 @@ static void MX_ADC3_Init(void)
   /* USER CODE BEGIN ADC3_Init 2 */
 
   /* USER CODE END ADC3_Init 2 */
+
+}
+
+/**
+  * @brief CRC Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CRC_Init(void)
+{
+
+  /* USER CODE BEGIN CRC_Init 0 */
+
+  /* USER CODE END CRC_Init 0 */
+
+  /* USER CODE BEGIN CRC_Init 1 */
+
+  /* USER CODE END CRC_Init 1 */
+  hcrc.Instance = CRC;
+  if (HAL_CRC_Init(&hcrc) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CRC_Init 2 */
+
+  /* USER CODE END CRC_Init 2 */
 
 }
 
@@ -847,10 +877,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOF, BEEP_Pin|PM2_CTRL_SD_Pin|PM1_CTRL_SD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(PM1_ENC_SCK_GPIO_Port, PM1_ENC_SCK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(PM1_ENC_SCK_GPIO_Port, PM1_ENC_SCK_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(PM2_ENC_SCK_GPIO_Port, PM2_ENC_SCK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(PM2_ENC_SCK_GPIO_Port, PM2_ENC_SCK_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, LED0_Pin|LED1_Pin, GPIO_PIN_RESET);
@@ -878,7 +908,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : PM1_ENC_SCK_Pin */
   GPIO_InitStruct.Pin = PM1_ENC_SCK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(PM1_ENC_SCK_GPIO_Port, &GPIO_InitStruct);
 
@@ -891,7 +921,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : PM2_ENC_SCK_Pin */
   GPIO_InitStruct.Pin = PM2_ENC_SCK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(PM2_ENC_SCK_GPIO_Port, &GPIO_InitStruct);
 

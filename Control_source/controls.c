@@ -96,7 +96,7 @@ void M1_Control(void) {
     }
 
     void M2_Control(void) {
-        motor2.theta_m = BISS_ReadAngleDeg(&encoder_motor2);           // 编码器数据（机械角度）
+        // motor2.theta_m = BISS_ReadAngleDeg(&encoder_motor2);           // 编码器数据（机械角度）
         CurrentSensorSuite(&motor2);             // ADC 电流采集
         motor2.theta_e = Pos_ElecTheta(&motor2);          // 电角度获取
         

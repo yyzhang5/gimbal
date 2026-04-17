@@ -28,11 +28,11 @@ void delay_us_tim7(uint16_t us)
     }
 }
 
-// void delay_us(uint16_t us)
-// {
-//     uint32_t Tdata = us*SYSCLK_MHZ/5;
-//     for(uint32_t i=0;i<Tdata;i++)
-//     {
-//         __NOP();
-//     }
-// }
+void delay_us(uint16_t us)
+{
+    uint32_t Tdata = us*SYSCLK_MHZ/5;
+    for(uint32_t i=0;i<Tdata;i++)
+    {
+        __NOP();
+    }
+}

@@ -66,7 +66,7 @@
         float Vdc;            // 直流母线电压
     
         // === 新增编码器指针 ===
-        BISS_Encoder_t *encoder;  // 指向对应的编码器实例
+        MP55_Encoder_t *encoder;  // 指向对应的编码器实例
 
         // === 新增ADC ===
         uint8_t adc_idx_u;      // U 相 ADC 缓冲区索引
@@ -93,7 +93,7 @@
     
     
     // 函数声明
-    void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w);
+    void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, MP55_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w);
     void FOC_ClarkeTransform(FOC_Motor *motor);
     void FOC_ParkTransform(FOC_Motor *motor);
     void FOC_InverseParkTransform(FOC_Motor *motor);

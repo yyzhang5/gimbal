@@ -23,7 +23,7 @@ CurrentOffset_t M2_Offset = {0};
 /**
   * @brief  FOC初始化
   */
-void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, BISS_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w) {       
+void FOC_Init(FOC_Motor *motor, TIM_TypeDef *TIMx, float Vdc, uint8_t pole_pairs, MP55_Encoder_t *encoder, uint8_t adc_idx_u, uint8_t adc_idx_v, uint8_t adc_idx_w) {       
     // 初始化电机参数
     motor->TIM_PWM = TIMx;
     motor->Vdc = Vdc;
