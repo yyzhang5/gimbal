@@ -72,7 +72,7 @@ typedef struct
     // processed data info   
     double           pos_deg; // 角度值 (度) 经过零点校准
     double           pos_rad; // 角度值 (弧度) 经过零点校准
- 
+
     //setting info
     uint32_t         zero_pos; // 零点位置
 

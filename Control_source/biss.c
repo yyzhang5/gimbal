@@ -148,6 +148,8 @@ MP55_Encoder_t encoder_motor2 =
     .zero_pos = MP55_2_ZERO_POS
 };
 
+    volatile int a = 0;
+    volatile int b = 0;
 
 /**
  * @brief 读取编码器角度并进行 CRC 校验
@@ -156,6 +158,9 @@ MP55_Encoder_t encoder_motor2 =
  */
 double MP55_ReadFrame(MP55_Encoder_t *enc)
 {
+
+    a++;
+
     volatile uint8_t bit[MP55_FRAME_BITS]; // 用于存储当前数据位
 
     // 1. 读取完整的 MP55_FRAME_BITS 位数据帧
@@ -219,7 +224,7 @@ double MP55_ReadFrame(MP55_Encoder_t *enc)
     uint32_t abs_pos = 0;
     bool n_err = false;
     bool n_warn = false;        
-    volatile uint8_t crc = 0;
+    volatile uint8_t n_crc = 0;
 
     for (uint8_t i = 0; i < MP55_FRAME_BITS; i++)
     {
@@ -229,31 +234,35 @@ double MP55_ReadFrame(MP55_Encoder_t *enc)
         {
             abs_pos = (abs_pos << 1) | (bit[i] & 0x01);
         }
-        else if (i < MP55_ST_BITS + MP55_ERR_BIT)
+        else if (i >= MP55_ST_BITS && i < MP55_ST_BITS + MP55_ERR_BIT)
         {
-            // n_err = (n_err << 1) | (bit[i] & 0x01);
-            n_err = bit[i];
+            n_err = (n_err << 1) | (bit[i] & 0x01);
+            // n_err = bit[i];
         }
-        else if (i < MP55_ST_BITS + MP55_ERR_BIT + MP55_WARN_BIT)
+        else if (i >= MP55_ST_BITS + MP55_ERR_BIT && i < MP55_ST_BITS + MP55_ERR_BIT + MP55_WARN_BIT)
         {
-            // n_warn = (n_warn << 1) | (bit[i] & 0x01); 
-            n_warn = bit[i];
+            n_warn = (n_warn << 1) | (bit[i] & 0x01); 
+            // n_warn = bit[i];
         }
-        else
+        else if (i >= MP55_ST_BITS + MP55_ERR_BIT + MP55_WARN_BIT && i < MP55_FRAME_BITS)
         { 
-            crc = (crc << 1) | (bit[i] & 0x01);
+            n_crc = (n_crc << 1) | (bit[i] & 0x01);
         }
     }
 
     // 3. 校验 CRC 多项式为 0x43 起始值 0x00
     volatile int64_t raw_data = raw_frame >> (MP55_FRAME_BITS - MP55_DATA_BITS);
     volatile uint8_t crc_ok = MP55_CRC6_Calc(raw_data);
-
+    volatile uint8_t crc = ~(n_crc) & 0x3F;
 
     // 4. 计算角度
     if (crc_ok == crc)
     // if (crc_ok == ((~crc) & 0x3F))
     {
+    
+
+        b++;
+        
 
         enc->abs_pos = abs_pos;
         enc->n_err = n_err;
@@ -279,6 +288,7 @@ void MP55_SetZeroPos(MP55_Encoder_t *enc, uint32_t zero_pos)
     enc->zero_pos = zero_pos;
 }
 
+
 /**
  * @brief 计算 CRC-6 校验和
  * @param data 输入数据
@@ -288,6 +298,7 @@ uint8_t MP55_CRC6_Calc(uint64_t data)
 {
     uint8_t crc = 0x00;
     uint8_t poly = 0x43;
+    uint8_t poly_full = poly & 0x7F;
 
     for (uint8_t i = 0; i < MP55_DATA_BITS; i++)
     {
@@ -295,11 +306,11 @@ uint8_t MP55_CRC6_Calc(uint64_t data)
 
         uint8_t feedback = ((crc >> 5) & 0x01) ^ data_bit;
 
-        crc <<= 1;
+        crc = (crc << 1) & 0x7F;
 
         if (feedback)
         {
-            crc ^= poly;
+            crc ^= poly_full;
         }
     }
 

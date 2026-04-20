@@ -53,7 +53,9 @@ volatile uint8_t adc2_ready = 0;
 //初始化函数
 uint8_t setup(void)
 {
-
+    // uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    
     set_led(0, 1);
     set_led(1, 1);
 
@@ -167,7 +169,7 @@ void timer_callback(void)       //led灯高低电平翻转
     }      
     if(cnt%10000 == 0)
     {
-        // toggle_led(1);
+        toggle_led(1);
         // toggle_led(0);
         // any code
     }
